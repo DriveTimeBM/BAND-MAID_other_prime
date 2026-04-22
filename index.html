@@ -1,0 +1,1411 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BAND-MAID PRIME — Video Archive</title>
+  <link rel="icon" href="logo.png">
+  <style>
+    /* ── RESET & ROOT ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #0a0a0a;
+      --bg2:     #141414;
+      --bg3:     #1c1c1c;
+      --bg4:     #252525;
+      --border:  #2a2a2a;
+      --border2: #3a3a3a;
+      --text:    #f0f0f0;
+      --text2:   #999;
+      --text3:   #555;
+      --accent:  #c8a96e;
+      --accent-dim: #8a7548;
+      --hl:      rgba(200, 169, 110, 0.18);
+      --radius:  8px;
+      --font:    'Segoe UI', system-ui, sans-serif;
+    }
+
+    html { background: var(--bg); }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: #e6c68a; }
+
+    /* ── LAYOUT ────────────────────────────────────────────────────── */
+    .app {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        "header header"
+        "sidebar main";
+      height: 100vh;
+    }
+    .app.detail-open {
+      grid-template-columns: 240px 1fr 480px;
+      grid-template-areas:
+        "header header header"
+        "sidebar main detail";
+    }
+
+    header.top {
+      grid-area: header;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    header.top h1 {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    header.top h1 .sub {
+      color: var(--text2);
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      margin-left: 8px;
+    }
+
+    .search-wrap {
+      flex: 1;
+      max-width: 500px;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    #search {
+      width: 100%;
+      padding: 8px 34px 8px 12px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 14px;
+    }
+    #search:focus {
+      outline: none;
+      border-color: var(--accent-dim);
+      background: var(--bg4);
+    }
+    .search-clear {
+      position: absolute;
+      right: 6px;
+      background: transparent;
+      border: none;
+      color: var(--text3);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      display: none;
+    }
+    .search-clear:hover { color: var(--accent); background: var(--bg4); }
+    .search-wrap.has-value .search-clear { display: block; }
+
+    .btn {
+      padding: 7px 14px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .btn:hover { background: var(--bg4); border-color: var(--border2); }
+    .btn.accent { border-color: var(--accent-dim); color: var(--accent); }
+    .btn.accent:hover { background: var(--hl); }
+
+    .status {
+      color: var(--text2);
+      font-size: 12px;
+      min-width: 120px;
+      text-align: right;
+    }
+
+    /* ── SIDEBAR ───────────────────────────────────────────────────── */
+    .sidebar {
+      grid-area: sidebar;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 14px 12px;
+    }
+    .sidebar h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text3);
+      margin: 0 0 8px;
+    }
+    .sidebar h3:not(:first-child) {
+      margin-top: 16px;
+    }
+    .filter-controls {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .filter-controls .btn {
+      flex: 1;
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+    .cat-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .cat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.1s;
+    }
+    .cat-item:hover { background: var(--bg3); }
+    .cat-item input {
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+    .cat-item-label { flex: 1; color: var(--text); cursor: pointer; }
+    .cat-item-count {
+      color: var(--text3);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .member-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 4px 0 0 8px;
+      margin-bottom: 8px;
+    }
+    .member-chip {
+      padding: 3px 8px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 11px;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+    .member-chip:hover { border-color: var(--border2); color: var(--text); }
+    .member-chip.active {
+      background: var(--hl);
+      border-color: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    /* ── MAIN GRID ─────────────────────────────────────────────────── */
+    .main {
+      grid-area: main;
+      overflow-y: auto;
+      padding: 16px 20px 40px;
+    }
+    .main-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+    .main-header .count {
+      font-size: 12px;
+      color: var(--text2);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.12s;
+      display: flex;
+      flex-direction: column;
+    }
+    .card:hover {
+      border-color: var(--accent-dim);
+      transform: translateY(-2px);
+    }
+    .card.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent-dim);
+    }
+    .card.song-hit { border-color: var(--accent); }
+    .card-thumb {
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(135deg, var(--bg3) 0%, var(--bg4) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .card-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .card-cat-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(0,0,0,0.75);
+      color: var(--accent);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+    .card-parts-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(0,0,0,0.75);
+      color: var(--text);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .card-body {
+      padding: 8px 10px 10px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .card-title {
+      font-size: 13px;
+      line-height: 1.35;
+      color: var(--text);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .card-meta {
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text3);
+      margin-top: auto;
+    }
+    .card-song-hit-note {
+      color: var(--accent-dim);
+      font-size: 11px;
+      font-style: italic;
+    }
+    .card mark {
+      background: var(--hl);
+      color: var(--accent);
+      padding: 0 2px;
+      border-radius: 2px;
+    }
+    .grid-empty {
+      grid-column: 1 / -1;
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--text2);
+      font-size: 13px;
+    }
+
+    /* ── DETAIL PANEL ──────────────────────────────────────────────── */
+    .detail {
+      grid-area: detail;
+      background: var(--bg2);
+      border-left: 1px solid var(--border);
+      overflow-y: auto;
+      display: none;
+    }
+    .app.detail-open .detail { display: block; }
+
+    .detail-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg2);
+      z-index: 1;
+    }
+    .detail-header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .detail-header h2 {
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.3;
+      color: var(--text);
+      flex: 1;
+    }
+    .detail-close {
+      background: transparent;
+      border: none;
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .detail-close:hover { color: var(--text); background: var(--bg4); }
+    .detail-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
+      color: var(--text2);
+      flex-wrap: wrap;
+    }
+    .detail-meta .label {
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 10px;
+      margin-right: 4px;
+    }
+    .detail-aliases {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--accent-dim);
+      font-style: italic;
+    }
+
+    .video-wrap {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+    .video-card {
+      display: block;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(135deg, var(--bg3) 0%, var(--bg4) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      text-decoration: none;
+      transition: border-color 0.15s;
+    }
+    .video-card:hover { border-color: var(--accent-dim); }
+    .video-card:hover .video-card-play {
+      background: var(--accent);
+      color: #000;
+      transform: scale(1.08);
+    }
+    .video-card:hover .video-card-bg { opacity: 0.75; }
+    .video-card-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.55;
+      transition: opacity 0.15s;
+    }
+    .video-card-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%);
+    }
+    .video-card-play {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      padding-left: 4px;
+      transition: all 0.15s;
+    }
+    .video-card-label {
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.5);
+      padding: 4px 12px;
+      border-radius: 16px;
+    }
+    .video-hint {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text2);
+      line-height: 1.5;
+    }
+    .video-hint .tip { color: var(--text3); font-style: italic; }
+    .parts-tabs {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .part-tab {
+      padding: 4px 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text2);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .part-tab:hover { color: var(--text); border-color: var(--border2); }
+    .part-tab.active {
+      background: var(--hl);
+      border-color: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .setlist {
+      padding: 14px 18px;
+    }
+    .setlist h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text3);
+      margin-bottom: 10px;
+    }
+    .setlist h3 .duration {
+      color: var(--text3);
+      font-weight: normal;
+      letter-spacing: 0;
+      text-transform: none;
+      float: right;
+    }
+    .setlist-items { list-style: none; }
+    .setlist-items li {
+      padding: 7px 10px;
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .setlist-items li:hover { background: var(--bg3); }
+    .setlist-items li.non-interactive { cursor: default; }
+    .setlist-items li.non-interactive:hover { background: transparent; }
+    .setlist-items li.song-hit {
+      background: var(--hl);
+      border-left: 3px solid var(--accent);
+      padding-left: 7px;
+    }
+    .setlist-items li.selected-time {
+      background: var(--bg4);
+      border-left: 3px solid var(--accent);
+      padding-left: 7px;
+    }
+    .setlist-items .time {
+      color: var(--accent);
+      font-family: 'Consolas', 'Menlo', monospace;
+      font-size: 12px;
+      flex-shrink: 0;
+      min-width: 48px;
+    }
+    .setlist-items .song { color: var(--text); font-size: 13px; }
+    .setlist-items mark {
+      background: transparent;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .no-setlist {
+      padding: 16px 12px;
+      color: var(--text3);
+      font-size: 12px;
+      font-style: italic;
+      text-align: center;
+    }
+
+    /* ── SERIES NAVIGATION ─────────────────────────────────────────── */
+    .series-nav {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+    }
+    .series-nav h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text3);
+      margin-bottom: 8px;
+    }
+    .series-nav-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .series-nav-row.single { grid-template-columns: 1fr; }
+    .series-link {
+      display: block;
+      padding: 8px 10px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text2);
+      font-size: 11px;
+      line-height: 1.3;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .series-link:hover {
+      background: var(--bg4);
+      border-color: var(--accent-dim);
+      color: var(--text);
+    }
+    .series-link .arrow {
+      color: var(--accent);
+      font-weight: bold;
+    }
+    .series-link .label {
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 9px;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* ── SCROLLBAR ─────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--border2); }
+
+    /* ── RESPONSIVE ────────────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .app.detail-open { grid-template-columns: 240px 1fr 380px; }
+    }
+    @media (max-width: 900px) {
+      body { overflow: auto; height: auto; }
+      .app, .app.detail-open {
+        grid-template-columns: 1fr;
+        grid-template-areas: "header" "sidebar" "main" "detail";
+        height: auto;
+      }
+      .sidebar { max-height: 30vh; border-right: none; border-bottom: 1px solid var(--border); }
+      .detail { border-left: none; border-top: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="top">
+      <h1>BAND-MAID PRIME <span class="sub">Video Archive</span></h1>
+      <div class="search-wrap">
+        <input id="search" type="text" placeholder="Search titles, songs, members, setlists…" autocomplete="off" spellcheck="false">
+        <button id="search-clear" class="search-clear" title="Clear search" aria-label="Clear search">✕</button>
+      </div>
+      <button class="btn accent" id="refresh-btn" title="Refetch data from source">⟲ Refresh</button>
+      <span class="status" id="status">Loading…</span>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+      <div style="color:var(--text3); padding:8px;">Loading…</div>
+    </aside>
+
+    <main class="main" id="main-panel">
+      <div class="main-header">
+        <span class="count" id="result-count"></span>
+      </div>
+      <div class="grid" id="grid">
+        <div class="grid-empty">Loading shows…</div>
+      </div>
+    </main>
+
+    <section class="detail" id="detail-panel"></section>
+  </div>
+
+  <script>
+  // ─── CONFIGURATION ───────────────────────────────────────────────
+  const SRC_PRIME    = 'https://drivetimebm.github.io/BAND-MAID_gpt/prime/prime.json';
+  const SRC_SETLISTS = 'https://drivetimebm.github.io/BAND-MAID_prime/data/setlists.json';
+  const SRC_ALIASES  = './aliases.json';
+
+  const CACHE_KEY  = 'bmprime_archive_cache_v1';
+  const CACHE_TTL  = 24 * 60 * 60 * 1000;
+
+  // ─── DATA LOADING ────────────────────────────────────────────────
+  const $status = document.getElementById('status');
+  const setStatus = (msg) => { $status.textContent = msg; };
+
+  async function fetchJson(url) {
+    const res = await fetch(url, { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+    return res.json();
+  }
+
+  async function loadAllData(forceFresh = false) {
+    if (!forceFresh) {
+      try {
+        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+        if (cached && Date.now() - cached.t < CACHE_TTL) {
+          setStatus(`Loaded from cache (${ageLabel(cached.t)})`);
+          return cached.data;
+        }
+      } catch {}
+    }
+    setStatus('Fetching…');
+    const [prime, setlists, aliases] = await Promise.all([
+      fetchJson(SRC_PRIME),
+      fetchJson(SRC_SETLISTS),
+      fetchJson(SRC_ALIASES).catch(() => []),
+    ]);
+    const data = { prime, setlists, aliases };
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ t: Date.now(), data })); }
+    catch (e) { console.warn('Cache write failed:', e); }
+    setStatus('Fresh data loaded');
+    return data;
+  }
+
+  function ageLabel(ts) {
+    const mins = Math.round((Date.now() - ts) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.round(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.round(hrs / 24)}d ago`;
+  }
+
+  // ─── DATA TRANSFORMATION ─────────────────────────────────────────
+  function extractVideoId(url) {
+    const m = url && url.match(/movies\/(\d+)/);
+    return m ? m[1] : null;
+  }
+
+  function deriveShowKey(title) {
+    if (!title) return '';
+    let t = title;
+    t = t.replace(/\([^)]*\)/g, '');
+    t = t.replace(/\s*[-–—:]?\s*(part|pt\.?)\s*\d+\s*$/i, '');
+    t = t.replace(/\s+/g, ' ').trim();
+    return t;
+  }
+
+  function extractPartNumber(title) {
+    if (!title) return 1;
+    const m = title.match(/\b(?:part|pt\.?)\s*(\d+)\b/i);
+    return m ? parseInt(m[1], 10) : 1;
+  }
+
+  function deriveDate(title) {
+    if (!title) return null;
+    const paren = title.match(/\(([^)]+)\)/);
+    const candidate = paren ? paren[1] : title;
+    const months = {
+      jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7,
+      sep:8, sept:8, oct:9, nov:10, dec:11
+    };
+    let m = candidate.match(/([A-Za-z]{3,4})\.?\s+(\d{1,2}),?\s+(\d{4})/);
+    if (m) {
+      const mo = months[m[1].toLowerCase()];
+      if (mo !== undefined) {
+        const yyyy = m[3];
+        const mm = String(mo + 1).padStart(2, '0');
+        const dd = String(+m[2]).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      }
+    }
+    m = candidate.match(/\b(19|20)\d{2}\b/);
+    if (m) return m[0];
+    return null;
+  }
+
+  function normalizeCategory(rawCategory, members) {
+    if (rawCategory && rawCategory.startsWith('Self-cover')) {
+      let mem = members ? members.split(',').map(s => s.trim()).filter(Boolean) : [];
+      if (!mem.length) {
+        const m = rawCategory.match(/Self-cover\s*-\s*(.+)/);
+        if (m) mem = m[1].split(',').map(s => s.trim()).filter(Boolean);
+      }
+      return { canonical: 'Self-cover', members: mem };
+    }
+    return { canonical: rawCategory || 'Uncategorized', members: [] };
+  }
+
+  function buildShows(prime, setlists, aliases) {
+    const candidates = prime.filter(e => e.Category !== 'OKYUJI' && e.URL);
+    const groups = new Map();
+
+    for (const entry of candidates) {
+      const videoId = extractVideoId(entry.URL);
+      if (!videoId) continue;
+      const sl = setlists[videoId] || null;
+      const { canonical, members } = normalizeCategory(entry.Category, entry.Members);
+      const titleKey = deriveShowKey(entry.Title);
+      const entryDate = sl && sl.date ? sl.date : deriveDate(entry.Title);
+
+      // Composite key includes category + title + date so we don't accidentally
+      // group videos that happen to share a title pattern across categories or dates.
+      const groupKey = `${canonical}||${titleKey}||${entryDate || 'nodate'}`;
+      if (!groups.has(groupKey)) {
+        groups.set(groupKey, { titleKey, canonical, parts: [], membersSet: new Set() });
+      }
+      const g = groups.get(groupKey);
+      members.forEach(m => g.membersSet.add(m));
+      g.parts.push({
+        videoId,
+        primeTitle: entry.Title,
+        partNum: extractPartNumber(entry.Title),
+        image: entry.Image || '',
+        url: entry.URL,
+        category: entry.Category,
+        canonical,
+        members,
+        song: entry.Song || '',
+        setlistData: sl,
+        venue: sl && sl.venue ? sl.venue : '',
+        date: sl && sl.date ? sl.date : deriveDate(entry.Title),
+      });
+    }
+
+    const aliasIndex = (aliases || []).map(a => ({
+      key: (a.showKey || '').toLowerCase(),
+      aliases: a.aliases || [],
+    }));
+    const findAliases = (titleKey) => {
+      const k = titleKey.toLowerCase();
+      for (const a of aliasIndex) {
+        if (!a.key) continue;
+        if (k.includes(a.key) || a.key.includes(k)) return a.aliases;
+      }
+      return [];
+    };
+
+    const shows = [];
+    for (const [groupKey, { titleKey, canonical, parts, membersSet }] of groups.entries()) {
+      parts.sort((a, b) => a.partNum - b.partNum);
+      const venue = parts.find(p => p.venue)?.venue || '';
+      const date  = parts.find(p => p.date)?.date || '';
+      const image = parts[0].image || '';
+      shows.push({
+        key: groupKey,
+        title: titleKey,
+        displayTitle: titleKey,
+        category: canonical,
+        members: Array.from(membersSet),
+        venue,
+        date,
+        image,
+        parts,
+        aliases: findAliases(titleKey),
+      });
+    }
+
+    // Sort by date desc (newest first), then title
+    const dateKey = (show) => {
+      if (!show.date) return '0000';
+      if (/^\d{4}-\d{2}-\d{2}$/.test(show.date)) return show.date;
+      if (/^\d{4}$/.test(show.date)) return `${show.date}-99-99`;
+      return show.date;
+    };
+    shows.sort((a, b) => {
+      const da = dateKey(a);
+      const db = dateKey(b);
+      if (da !== db) return db.localeCompare(da);
+      return a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' });
+    });
+
+    return shows;
+  }
+
+  function formatDate(d) {
+    if (!d) return '';
+    if (/^\d{4}$/.test(d)) return d;
+    const m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) {
+      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${monthNames[+m[2] - 1]} ${+m[3]}, ${m[1]}`;
+    }
+    return d;
+  }
+
+  function timeToSeconds(s) {
+    if (!s) return 0;
+    const parts = s.split(':').map(Number);
+    if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+    if (parts.length === 2) return parts[0]*60 + parts[1];
+    return parts[0] || 0;
+  }
+  function formatSeconds(s) {
+    if (!s || isNaN(s)) return '0:00';
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    return `${m}:${String(sec).padStart(2,'0')}`;
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function highlight(text, query) {
+    if (!query) return escapeHtml(text);
+    const esc = escapeHtml(text);
+    const qEsc = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return esc.replace(new RegExp(`(${qEsc})`, 'gi'), '<mark>$1</mark>');
+  }
+
+  // ─── SEARCH & FILTER ─────────────────────────────────────────────
+  function searchShow(show, query) {
+    if (!query) return { matches: true, songHits: new Set() };
+    const q = query.toLowerCase();
+    const songHits = new Set();
+    for (const part of show.parts) {
+      if (!part.setlistData || !part.setlistData.setlist) continue;
+      for (const song of part.setlistData.setlist) {
+        if ((song.song || '').toLowerCase().includes(q)) {
+          songHits.add(`${part.videoId}|${song.time || ''}`);
+        }
+      }
+    }
+    let songFieldMatch = false;
+    for (const part of show.parts) {
+      if ((part.song || '').toLowerCase().includes(q)) { songFieldMatch = true; break; }
+    }
+    const titleMatch  = show.title.toLowerCase().includes(q);
+    const venueMatch  = (show.venue || '').toLowerCase().includes(q);
+    const aliasMatch  = (show.aliases || []).some(a => a.toLowerCase().includes(q));
+    const dateMatch   = (show.date || '').toLowerCase().includes(q);
+    const memberMatch = (show.members || []).some(m => m.toLowerCase().includes(q));
+    const catMatch    = (show.category || '').toLowerCase().includes(q);
+    const matches = titleMatch || venueMatch || aliasMatch || dateMatch
+                 || memberMatch || catMatch || songHits.size > 0 || songFieldMatch;
+    return { matches, songHits };
+  }
+
+  function passesFilters(show, state) {
+    // Special "none" sentinel: explicitly no categories
+    if (state.activeCategories.has('__none__')) return false;
+    if (state.activeCategories.size > 0 && !state.activeCategories.has(show.category)) {
+      return false;
+    }
+    if (show.category === 'Self-cover' && state.activeMembers.size > 0) {
+      const hasAny = show.members.some(m => state.activeMembers.has(m));
+      if (!hasAny) return false;
+    }
+    return true;
+  }
+
+  // ─── STATE ────────────────────────────────────────────────────────
+  const state = {
+    shows: [],
+    query: '',
+    activeCategories: new Set(),
+    activeMembers: new Set(),
+    selectedKey: null,
+    selectedPartIdx: 0,
+    jumpTime: null,
+  };
+
+  const $sidebar     = document.getElementById('sidebar');
+  const $grid        = document.getElementById('grid');
+  const $detail      = document.getElementById('detail-panel');
+  const $app         = document.getElementById('app');
+  const $search      = document.getElementById('search');
+  const $resultCount = document.getElementById('result-count');
+  const $searchWrap  = $search.parentElement;
+  const $searchClear = document.getElementById('search-clear');
+
+  // ─── SIDEBAR RENDERING ───────────────────────────────────────────
+  function renderSidebar() {
+    const catCounts = new Map();
+    const memberCounts = new Map();
+    for (const show of state.shows) {
+      catCounts.set(show.category, (catCounts.get(show.category) || 0) + 1);
+      if (show.category === 'Self-cover') {
+        for (const m of show.members) {
+          memberCounts.set(m, (memberCounts.get(m) || 0) + 1);
+        }
+      }
+    }
+    const cats = Array.from(catCounts.entries()).sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return a[0].localeCompare(b[0]);
+    });
+    const members = Array.from(memberCounts.entries()).sort((a, b) => b[1] - a[1]);
+
+    let html = `
+      <h3>Categories</h3>
+      <div class="filter-controls">
+        <button class="btn" id="cat-all" title="Show all categories">All</button>
+        <button class="btn" id="cat-none" title="Hide all">None</button>
+      </div>
+      <ul class="cat-list">
+        ${cats.map(([cat, count]) => {
+          const id = 'cat-cb-' + cat.replace(/[^a-z0-9]/gi, '_');
+          const checked = state.activeCategories.has(cat) ? 'checked' : '';
+          return `
+            <li class="cat-item">
+              <input type="checkbox" id="${id}" data-cat="${escapeHtml(cat)}" ${checked}>
+              <label class="cat-item-label" for="${id}">${escapeHtml(cat)}</label>
+              <span class="cat-item-count">${count}</span>
+            </li>`;
+        }).join('')}
+      </ul>
+    `;
+
+    const showMembers = state.activeCategories.has('Self-cover')
+      || (state.activeCategories.size === 0 && memberCounts.size > 0);
+    if (showMembers && members.length) {
+      html += `
+        <h3>Members <span style="color:var(--text3); font-weight:normal; text-transform:none; letter-spacing:0;">(self-covers)</span></h3>
+        <div class="member-chips">
+          ${members.map(([m, count]) => `
+            <span class="member-chip${state.activeMembers.has(m) ? ' active' : ''}" data-member="${escapeHtml(m)}">${escapeHtml(m)} <span style="opacity:0.6;">${count}</span></span>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    $sidebar.innerHTML = html;
+
+    $sidebar.querySelectorAll('.cat-item input').forEach(input => {
+      input.addEventListener('change', () => {
+        const cat = input.dataset.cat;
+        // Clear "none" sentinel when user manually changes things
+        state.activeCategories.delete('__none__');
+        if (input.checked) state.activeCategories.add(cat);
+        else state.activeCategories.delete(cat);
+        if (!state.activeCategories.has('Self-cover')) state.activeMembers.clear();
+        updateUrl();
+        renderSidebar();
+        renderGrid();
+      });
+    });
+
+    document.getElementById('cat-all').addEventListener('click', () => {
+      state.activeCategories.clear();
+      state.activeMembers.clear();
+      updateUrl();
+      renderSidebar();
+      renderGrid();
+    });
+    document.getElementById('cat-none').addEventListener('click', () => {
+      state.activeCategories.clear();
+      state.activeCategories.add('__none__');
+      state.activeMembers.clear();
+      updateUrl();
+      renderSidebar();
+      renderGrid();
+    });
+
+    $sidebar.querySelectorAll('.member-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const m = chip.dataset.member;
+        if (state.activeMembers.has(m)) state.activeMembers.delete(m);
+        else state.activeMembers.add(m);
+        updateUrl();
+        renderSidebar();
+        renderGrid();
+      });
+    });
+  }
+
+  // ─── GRID RENDERING ──────────────────────────────────────────────
+  function renderGrid() {
+    const q = state.query;
+    const results = state.shows
+      .filter(s => passesFilters(s, state))
+      .map(s => ({ show: s, ...searchShow(s, q) }))
+      .filter(r => r.matches);
+
+    $resultCount.textContent = `${results.length} ${results.length === 1 ? 'show' : 'shows'}`;
+
+    if (!results.length) {
+      $grid.innerHTML = `<div class="grid-empty">No shows match your filters${q ? ` and search "${escapeHtml(q)}"` : ''}.</div>`;
+      return;
+    }
+
+    $grid.innerHTML = results.map(({ show, songHits }) => {
+      const selected = show.key === state.selectedKey ? ' selected' : '';
+      const songHit = songHits.size > 0 ? ' song-hit' : '';
+      const partsBadge = show.parts.length > 1
+        ? `<div class="card-parts-badge">${show.parts.length} parts</div>` : '';
+      const songNote = songHits.size > 0
+        ? `<div class="card-song-hit-note">${songHits.size} song match${songHits.size > 1 ? 'es' : ''}</div>` : '';
+      const dateLabel = show.date ? formatDate(show.date) : '';
+      const memberLabel = show.category === 'Self-cover' && show.members.length
+        ? show.members.join(', ') : '';
+      const meta = [memberLabel, dateLabel].filter(Boolean).join(' · ');
+
+      return `
+        <div class="card${selected}${songHit}" data-key="${escapeHtml(show.key)}">
+          <div class="card-thumb">
+            ${show.image ? `<img src="${escapeHtml(show.image)}" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : ''}
+            <div class="card-cat-badge">${escapeHtml(show.category)}</div>
+            ${partsBadge}
+          </div>
+          <div class="card-body">
+            <div class="card-title">${highlight(show.title, q)}</div>
+            ${meta ? `<div class="card-meta">${escapeHtml(meta)}</div>` : ''}
+            ${songNote}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    $grid.querySelectorAll('.card').forEach(el => {
+      el.addEventListener('click', () => {
+        const key = el.dataset.key;
+        const result = results.find(r => r.show.key === key);
+        let jumpToSong = null;
+        if (result && result.songHits.size > 0) {
+          jumpToSong = Array.from(result.songHits)[0];
+        }
+        selectShow(key, jumpToSong);
+      });
+    });
+  }
+
+  function selectShow(key, jumpToSong = null) {
+    state.selectedKey = key;
+    state.selectedPartIdx = 0;
+    state.jumpTime = null;
+
+    if (jumpToSong) {
+      const show = state.shows.find(s => s.key === key);
+      if (show) {
+        const [vid, time] = jumpToSong.split('|');
+        const idx = show.parts.findIndex(p => p.videoId === vid);
+        if (idx >= 0) {
+          state.selectedPartIdx = idx;
+          state.jumpTime = timeToSeconds(time);
+        }
+      }
+    }
+
+    $app.classList.add('detail-open');
+    updateUrl();
+    renderGrid();
+    renderDetail();
+  }
+
+  function closeDetail() {
+    state.selectedKey = null;
+    state.jumpTime = null;
+    $app.classList.remove('detail-open');
+    updateUrl();
+    renderGrid();
+  }
+
+  // ─── DETAIL PANEL ────────────────────────────────────────────────
+  function renderDetail() {
+    const show = state.shows.find(s => s.key === state.selectedKey);
+    if (!show) { $detail.innerHTML = ''; return; }
+    const q = state.query;
+    const partIdx = Math.min(state.selectedPartIdx, show.parts.length - 1);
+    const part = show.parts[partIdx];
+
+    const seekHash = state.jumpTime ? `#t=${state.jumpTime}` : '';
+    const openUrl  = `${part.url}${seekHash}`;
+    const jumpLabel = state.jumpTime
+      ? `Open at ${formatSeconds(state.jumpTime)}`
+      : 'Open on Prime';
+    const hintHtml = state.jumpTime
+      ? `<div class="video-hint">
+           Click the thumbnail to open this video on Prime, starting at ${formatSeconds(state.jumpTime)}.
+           <div class="tip">Tip: click a different song below to change the jump point.</div>
+         </div>`
+      : `<div class="video-hint">
+           Click the thumbnail to open this video on Prime.
+           ${(part.setlistData && part.setlistData.setlist) ? '<div class="tip">Tip: click any item below to jump straight to that point when you open the video.</div>' : ''}
+         </div>`;
+
+    const partsTabsHtml = show.parts.length > 1
+      ? `<div class="parts-tabs">
+           ${show.parts.map((p, i) => `
+             <div class="part-tab${i === partIdx ? ' active' : ''}" data-pi="${i}">
+               Part ${p.partNum}
+             </div>`).join('')}
+         </div>`
+      : '';
+
+    const sl = part.setlistData;
+    let setlistHtml;
+    if (sl && sl.setlist && sl.setlist.length) {
+      const durationLabel = sl.notes ? `<span class="duration">${escapeHtml(sl.notes)}</span>` : '';
+      const items = sl.setlist.map(song => {
+        const songMatches = q && (song.song || '').toLowerCase().includes(q.toLowerCase());
+        const hitCls = songMatches ? ' song-hit' : '';
+        const timeStr = song.time || '';
+        const seconds = timeToSeconds(timeStr);
+        const interactive = timeStr ? '' : ' non-interactive';
+        return `
+          <li class="${hitCls}${interactive}" data-t="${seconds}">
+            <span class="time">${escapeHtml(timeStr || '—')}</span>
+            <span class="song">${highlight(song.song || '', q)}</span>
+          </li>`;
+      }).join('');
+      setlistHtml = `
+        <div class="setlist">
+          <h3>Contents${show.parts.length > 1 ? ` — Part ${part.partNum}` : ''}${durationLabel}</h3>
+          <ol class="setlist-items">${items}</ol>
+        </div>`;
+    } else if (part.song) {
+      setlistHtml = `
+        <div class="setlist">
+          <h3>Song</h3>
+          <ol class="setlist-items">
+            <li class="non-interactive">
+              <span class="time">—</span>
+              <span class="song">${escapeHtml(part.song)}</span>
+            </li>
+          </ol>
+        </div>`;
+    } else {
+      setlistHtml = '';
+    }
+
+    let seriesNavHtml = '';
+    if (sl && (sl.previous || sl.next)) {
+      const prevPart = sl.previous;
+      const nextPart = sl.next;
+      const prevShow = prevPart ? findShowByVideoId(prevPart) : null;
+      const nextShow = nextPart ? findShowByVideoId(nextPart) : null;
+      const prevHtml = prevPart ? `
+        <a class="series-link" data-vid="${escapeHtml(prevPart)}">
+          <span class="label"><span class="arrow">←</span> Previous</span>
+          ${escapeHtml(prevShow ? prevShow.title : `Video ${prevPart}`)}
+        </a>` : '';
+      const nextHtml = nextPart ? `
+        <a class="series-link" data-vid="${escapeHtml(nextPart)}">
+          <span class="label">Next <span class="arrow">→</span></span>
+          ${escapeHtml(nextShow ? nextShow.title : `Video ${nextPart}`)}
+        </a>` : '';
+      const single = !prevHtml || !nextHtml ? ' single' : '';
+      seriesNavHtml = `
+        <div class="series-nav">
+          <h3>Related</h3>
+          <div class="series-nav-row${single}">${prevHtml}${nextHtml}</div>
+        </div>`;
+    }
+
+    const aliasLine = show.aliases.length
+      ? `<div class="detail-aliases">Also known as: ${show.aliases.map(a => escapeHtml(a)).join(', ')}</div>`
+      : '';
+    const memberMeta = show.category === 'Self-cover' && show.members.length
+      ? `<span><span class="label">Member${show.members.length > 1 ? 's' : ''}</span>${escapeHtml(show.members.join(', '))}</span>` : '';
+
+    $detail.innerHTML = `
+      <div class="detail-header">
+        <div class="detail-header-top">
+          <h2>${escapeHtml(show.displayTitle)}</h2>
+          <button class="detail-close" id="detail-close" title="Close">✕</button>
+        </div>
+        <div class="detail-meta">
+          <span><span class="label">Cat</span>${escapeHtml(show.category)}</span>
+          ${show.date  ? `<span><span class="label">Date</span>${escapeHtml(formatDate(show.date))}</span>` : ''}
+          ${show.venue ? `<span><span class="label">Venue</span>${escapeHtml(show.venue)}</span>` : ''}
+          ${memberMeta}
+          ${show.parts.length > 1 ? `<span><span class="label">Parts</span>${show.parts.length}</span>` : ''}
+        </div>
+        ${aliasLine}
+      </div>
+      <div class="video-wrap">
+        <a class="video-card" href="${escapeHtml(openUrl)}" target="_blank" rel="noopener" title="${escapeHtml(jumpLabel)} (opens in new tab)">
+          ${part.image ? `<img class="video-card-bg" src="${escapeHtml(part.image)}" alt="" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : ''}
+          <div class="video-card-overlay">
+            <div class="video-card-play">▶</div>
+            <div class="video-card-label">${escapeHtml(jumpLabel)}</div>
+          </div>
+        </a>
+        ${hintHtml}
+        ${partsTabsHtml}
+      </div>
+      ${setlistHtml}
+      ${seriesNavHtml}
+    `;
+
+    document.getElementById('detail-close').addEventListener('click', closeDetail);
+
+    $detail.querySelectorAll('.part-tab').forEach(el => {
+      el.addEventListener('click', () => {
+        state.selectedPartIdx = parseInt(el.dataset.pi, 10);
+        state.jumpTime = null;
+        updateUrl();
+        renderDetail();
+      });
+    });
+
+    $detail.querySelectorAll('.setlist-items li').forEach(el => {
+      if (el.classList.contains('non-interactive')) return;
+      el.addEventListener('click', () => {
+        const seconds = parseInt(el.dataset.t, 10);
+        if (isNaN(seconds)) return;
+        state.jumpTime = seconds;
+        const card = $detail.querySelector('.video-card');
+        if (card) {
+          card.href = `${part.url}#t=${seconds}`;
+          const label = card.querySelector('.video-card-label');
+          if (label) label.textContent = `Open at ${formatSeconds(seconds)}`;
+          card.title = `Open at ${formatSeconds(seconds)} (opens in new tab)`;
+        }
+        $detail.querySelectorAll('.setlist-items li').forEach(li => li.classList.remove('selected-time'));
+        el.classList.add('selected-time');
+        updateUrl();
+      });
+    });
+
+    $detail.querySelectorAll('.series-link').forEach(el => {
+      el.addEventListener('click', () => {
+        const vid = el.dataset.vid;
+        const show = findShowByVideoId(vid);
+        if (show) {
+          selectShow(show.key);
+          $detail.scrollTop = 0;
+        } else {
+          window.open(`https://bandmaidprime.tokyo/movies/${vid}`, '_blank', 'noopener');
+        }
+      });
+    });
+  }
+
+  function findShowByVideoId(vid) {
+    for (const show of state.shows) {
+      if (show.parts.some(p => p.videoId === vid)) return show;
+    }
+    return null;
+  }
+
+  // ─── URL STATE ────────────────────────────────────────────────────
+  function updateUrl() {
+    const params = new URLSearchParams();
+    if (state.query) params.set('q', state.query);
+    if (state.activeCategories.size > 0) {
+      params.set('cat', Array.from(state.activeCategories).join('|'));
+    }
+    if (state.activeMembers.size > 0) {
+      params.set('mem', Array.from(state.activeMembers).join('|'));
+    }
+    if (state.selectedKey) params.set('show', state.selectedKey);
+    if (state.selectedPartIdx) params.set('part', state.selectedPartIdx);
+    if (state.jumpTime) params.set('t', state.jumpTime);
+    const url = `${location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    history.replaceState(null, '', url);
+  }
+
+  function loadFromUrl() {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q');
+    if (q) { state.query = q; $search.value = q; }
+    const cats = params.get('cat');
+    if (cats) cats.split('|').forEach(c => state.activeCategories.add(c));
+    const mems = params.get('mem');
+    if (mems) mems.split('|').forEach(m => state.activeMembers.add(m));
+    const showKey = params.get('show');
+    if (showKey && state.shows.some(s => s.key === showKey)) {
+      state.selectedKey = showKey;
+      state.selectedPartIdx = parseInt(params.get('part') || '0', 10) || 0;
+      state.jumpTime = parseInt(params.get('t') || '0', 10) || null;
+      $app.classList.add('detail-open');
+    }
+  }
+
+  // ─── INIT ─────────────────────────────────────────────────────────
+  let searchDebounce;
+  const syncSearchClearVisibility = () => {
+    if ($search.value) $searchWrap.classList.add('has-value');
+    else $searchWrap.classList.remove('has-value');
+  };
+
+  $search.addEventListener('input', e => {
+    syncSearchClearVisibility();
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      state.query = e.target.value.trim();
+      updateUrl();
+      renderGrid();
+    }, 120);
+  });
+
+  $searchClear.addEventListener('click', () => {
+    $search.value = '';
+    state.query = '';
+    syncSearchClearVisibility();
+    updateUrl();
+    renderGrid();
+    $search.focus();
+  });
+
+  document.getElementById('refresh-btn').addEventListener('click', async () => {
+    setStatus('Refreshing…');
+    try {
+      const data = await loadAllData(true);
+      state.shows = buildShows(data.prime, data.setlists, data.aliases);
+      renderSidebar();
+      renderGrid();
+      if (state.selectedKey) renderDetail();
+    } catch (err) {
+      console.error(err);
+      setStatus(`Error: ${err.message}`);
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && $app.classList.contains('detail-open')) closeDetail();
+  });
+
+  (async function init() {
+    try {
+      const data = await loadAllData(false);
+      state.shows = buildShows(data.prime, data.setlists, data.aliases);
+      console.info(`[BM Archive] Built ${state.shows.length} shows from ${data.prime.length} videos`);
+      loadFromUrl();
+      syncSearchClearVisibility();
+      renderSidebar();
+      renderGrid();
+      if (state.selectedKey) renderDetail();
+    } catch (err) {
+      console.error(err);
+      $grid.innerHTML = `<div class="grid-empty">Failed to load data: ${escapeHtml(err.message)}</div>`;
+      setStatus('Error');
+    }
+  })();
+  </script>
+</body>
+</html>
